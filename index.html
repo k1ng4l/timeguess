@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#09090f">
+    <title>TIMEGUESS — Испытай точность</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <div class="background-glow glow-one"></div>
+    <div class="background-glow glow-two"></div>
+
+    <main class="app">
+
+        <header class="header">
+            <a class="logo" href="/">TIME<span>GUESS</span></a>
+            <div class="header-status">
+                <span class="status-dot"></span>
+                <span>ONLINE</span>
+            </div>
+        </header>
+
+        <!-- AUTH -->
+
+        <section id="authScreen" class="auth-screen">
+
+            <div class="auth-intro">
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    TEST YOUR PRECISION
+                </div>
+
+                <h1>Почувствуй<br><span>время.</span></h1>
+
+                <p>
+                    Испытай свою точность. Соревнуйся с друзьями
+                    и докажи, насколько хорошо ты чувствуешь время.
+                </p>
+            </div>
+
+            <div class="auth-card">
+
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="loginTab" type="button">Вход</button>
+                    <button class="auth-tab" id="registerTab" type="button">Регистрация</button>
+                </div>
+
+                <form id="loginForm" class="auth-form">
+
+                    <div class="form-heading">
+                        <h2>С возвращением</h2>
+                        <p>Войди в свой аккаунт TIMEGUESS</p>
+                    </div>
+
+                    <label for="loginUsername">Имя пользователя</label>
+                    <input id="loginUsername" type="text"
+                           placeholder="Твоё имя" minlength="3"
+                           maxlength="20" autocomplete="username" required>
+
+                    <label for="loginPassword">Пароль</label>
+                    <input id="loginPassword" type="password"
+                           placeholder="Твой пароль" minlength="8"
+                           maxlength="128" autocomplete="current-password" required>
+
+                    <button class="primary-button" type="submit">
+                        Войти в аккаунт <span>→</span>
+                    </button>
+
+                    <div class="auth-message" id="loginMessage"></div>
+                </form>
+
+                <form id="registerForm" class="auth-form hidden">
+
+                    <div class="form-heading">
+                        <h2>Создай аккаунт</h2>
+                        <p>Твой путь в TIMEGUESS начинается здесь</p>
+                    </div>
+
+                    <label for="registerUsername">Имя пользователя</label>
+                    <input id="registerUsername" type="text"
+                           placeholder="Придумай имя" minlength="3"
+                           maxlength="20" autocomplete="username" required>
+
+                    <div class="input-hint">3–20 символов: буквы, цифры и _</div>
+
+                    <label for="registerPassword">Пароль</label>
+                    <input id="registerPassword" type="password"
+                           placeholder="Минимум 8 символов" minlength="8"
+                           maxlength="128" autocomplete="new-password" required>
+
+                    <label for="registerPasswordConfirm">Повтори пароль</label>
+                    <input id="registerPasswordConfirm" type="password"
+                           placeholder="Повтори свой пароль" minlength="8"
+                           maxlength="128" autocomplete="new-password" required>
+
+                    <button class="primary-button" type="submit">
+                        Создать аккаунт <span>→</span>
+                    </button>
+
+                    <div class="auth-message" id="registerMessage"></div>
+                </form>
+
+            </div>
+        </section>
+
+        <!-- DASHBOARD -->
+
+        <section id="dashboardScreen" class="dashboard hidden">
+
+            <div class="welcome-section">
+                <div>
+                    <div class="eyebrow">PERSONAL SPACE</div>
+                    <h1>Привет, <span id="welcomeUsername">Player</span></h1>
+                    <p>Готов проверить своё чувство времени?</p>
+                </div>
+
+                <button id="logoutButton" class="logout-button" type="button">
+                    Выйти
+                </button>
+            </div>
+
+            <!-- PROFILE -->
+
+            <div class="profile-card">
+
+                <div class="profile-top">
+                    <div class="avatar" id="profileAvatar">P</div>
+
+                    <div class="profile-identity">
+                        <h2 id="profileUsername">Player</h2>
+                        <p id="profilePublicId">TG-0000000000</p>
+                    </div>
+
+                    <div class="profile-badge">PLAYER</div>
+                </div>
+
+                <div class="profile-divider"></div>
+
+                <div class="stats-grid">
+                    <div class="stat">
+                        <span class="stat-value" id="statWins">0</span>
+                        <span class="stat-label">Победы</span>
+                    </div>
+
+                    <div class="stat">
+                        <span class="stat-value" id="statGames">0</span>
+                        <span class="stat-label">Игр</span>
+                    </div>
+
+                    <div class="stat">
+                        <span class="stat-value" id="statRounds">0</span>
+                        <span class="stat-label">Раундов</span>
+                    </div>
+
+                    <div class="stat">
+                        <span class="stat-value" id="statWinRate">0%</span>
+                        <span class="stat-label">% побед</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- PERSONAL STOPWATCH -->
+            <section class="stopwatch-card">
+                <div class="room-heading">
+                    <div>
+                        <div class="section-label">PERSONAL TOOL</div>
+                        <h2>Секундомер</h2>
+                        <p>Обычный секундомер для тренировок</p>
+                    </div>
+                    <div class="room-icon">◷</div>
+                </div>
+                <div id="stopwatchDisplay" class="stopwatch-display">00:00.00</div>
+                <div class="stopwatch-controls">
+                    <button id="stopwatchStart" class="primary-button" type="button">Старт</button>
+                    <button id="stopwatchLap" class="secondary-button" type="button" disabled>Круг</button>
+                    <button id="stopwatchReset" class="secondary-button" type="button">Сбросить</button>
+                </div>
+                <div class="laps-heading"><strong>Круги</strong><span><b id="lapCount">0</b> записей</span></div>
+                <div id="stopwatchLaps" class="stopwatch-laps">
+                    <div class="laps-empty">Здесь появятся твои результаты</div>
+                </div>
+            </section>
+
+            <!-- ROOM CREATION -->
+<!-- ROOM CREATION -->
+
+<section class="room-card">
+
+    <div class="room-heading">
+        <div>
+            <div class="section-label">MULTIPLAYER</div>
+            <h2>Игровые комнаты</h2>
+            <p>Создай комнату или присоединись к друзьям</p>
+        </div>
+        <div class="room-icon">⌘</div>
+    </div>
+
+    <div id="roomActions">
+
+        <div class="room-setup">
+            <label for="targetScore">Очков для победы</label>
+            <select id="targetScore" class="room-select">
+                <option value="3">3 очка</option>
+                <option value="5">5 очков</option>
+                <option value="7" selected>7 очков</option>
+                <option value="10">10 очков</option>
+                <option value="15">15 очков</option>
+                <option value="20">20 очков</option>
+            </select>
+
+            <button id="createRoomButton" class="primary-button" type="button">
+                Создать комнату <span>→</span>
+            </button>
+        </div>
+
+        <div class="room-join">
+            <div class="room-divider"></div>
+            <div class="section-label">JOIN ROOM</div>
+            <h3>Есть код комнаты?</h3>
+            <p>Введи шестизначный код, чтобы присоединиться.</p>
+
+            <input
+                id="joinRoomCode"
+                class="room-code-input"
+                type="text"
+                maxlength="6"
+                placeholder="НАПРИМЕР: A7K2PQ"
+                autocomplete="off"
+            >
+
+            <button id="joinRoomButton" class="primary-button" type="button">
+                Присоединиться <span>→</span>
+            </button>
+        </div>
+
+    </div>
+
+    <div id="roomMessage" class="room-message"></div>
+
+    <div id="lobbyPanel" class="lobby-panel hidden">
+
+        <div class="room-divider"></div>
+
+        <div class="created-room-heading">
+            <div>
+                <div class="section-label">ROOM LOBBY</div>
+                <h3>Игровая комната</h3>
+            </div>
+            <span id="lobbyStatus" class="room-status">LOBBY</span>
+        </div>
+
+        <p class="room-code-caption">КОД КОМНАТЫ</p>
+
+        <div class="room-code-row">
+            <div id="lobbyRoomCode" class="room-code">------</div>
+            <button id="copyRoomCode" class="copy-button" type="button">
+                Копировать
+            </button>
+        </div>
+
+        <div class="room-info">
+            <span>Очков для победы</span>
+            <strong id="lobbyTargetScore">7</strong>
+        </div>
+
+        <div class="room-info">
+            <span>Игроков</span>
+            <strong id="lobbyPlayerCount">1 / 4</strong>
+        </div>
+
+        <div class="lobby-players-heading">
+            <h3>Участники</h3>
+            <span>МАКС. 4</span>
+        </div>
+
+        <div id="lobbyPlayers" class="lobby-players"></div>
+
+        <p id="lobbyHint" class="room-hint">
+            Ожидаем других игроков...
+        </p>
+
+        <button id="startRoomButton" class="primary-button hidden" type="button">
+            Начать игру <span>→</span>
+        </button>
+
+        <button id="leaveRoomButton" class="leave-room-button" type="button">
+            Покинуть комнату
+        </button>
+
+    </div>
+
+
+    <section id="gamePanel" class="game-panel hidden">
+        <div class="room-divider"></div>
+        <div class="game-topline">
+            <div>
+                <div class="section-label">TIMEGUESS MATCH</div>
+                <h2>Раунд <span id="roundNumber">1</span></h2>
+            </div>
+            <span id="phaseLabel" class="room-status playing">ИГРА ИДЁТ</span>
+        </div>
+
+        <div class="game-scoreboard">
+            <div class="lobby-players-heading"><h3>Таблица очков</h3><span id="scoreTarget">ЦЕЛЬ: 7</span></div>
+            <div id="scorePlayers" class="score-players"></div>
+        </div>
+
+        <div id="setterPanel" class="game-action-card hidden">
+            <div class="section-label">ТВОЯ РОЛЬ В ЭТОМ РАУНДЕ</div>
+            <h3>Загадай время</h3>
+            <p>Выбери число от 0.01 до 10.00 секунды. Остальные игроки не увидят его до конца раунда.</p>
+            <label for="targetTimeInput">Загаданное время (секунды)</label>
+            <input id="targetTimeInput" class="room-code-input" type="number" min="0.01" max="10" step="0.01" value="3.50">
+            <div class="game-action-buttons">
+                <button id="setTargetButton" class="primary-button" type="button">Загадать время</button>
+                <button id="randomTargetButton" class="secondary-button" type="button">Случайное время</button>
+            </div>
+        </div>
+
+        <div id="timerPanel" class="game-action-card hidden">
+            <div class="section-label">ТВОЯ ПОПЫТКА</div>
+            <h3>Останови время как можно точнее</h3>
+            <p>Нажми старт, мысленно отсчитай загаданное время и нажми стоп. Текущее время на экране не показывается.</p>
+            <div id="attemptTimerStatus" class="attempt-timer-status">Готов к старту</div>
+            <button id="attemptTimerButton" class="primary-button" type="button">Старт</button>
+        </div>
+
+        <div id="waitingPanel" class="game-action-card waiting-card hidden">
+            <div class="waiting-pulse"></div>
+            <h3 id="waitingTitle">Ожидаем игрока</h3>
+            <p id="waitingText">Сейчас ход другого участника.</p>
+        </div>
+
+        <div id="targetPanel" class="game-action-card target-reveal hidden">
+            <div class="section-label">ЗАГАДАННОЕ ВРЕМЯ</div>
+            <div id="targetTime" class="target-time-value">0.00</div>
+            <span>секунд</span>
+        </div>
+
+        <div id="roundResultPanel" class="game-action-card hidden">
+            <div class="section-label">РЕЗУЛЬТАТ РАУНДА</div>
+            <h3 id="roundWinner">Победитель</h3>
+            <div id="roundResults" class="round-results"></div>
+            <button id="nextRoundButton" class="primary-button hidden" type="button">Следующий раунд →</button>
+        </div>
+
+        <div id="finalPanel" class="game-action-card final-game-panel hidden">
+            <div class="section-label">MATCH FINISHED</div>
+            <h2>Игра завершена!</h2>
+            <h3 id="finalWinner">Победитель</h3>
+            <p>Набрано необходимое количество очков.</p>
+        </div>
+
+        <button id="leaveGameButton" class="leave-room-button" type="button">Покинуть игру</button>
+    </section>
+
+</section>
+<script src="/script.js?v=3" defer></script>
+</body>
+</html>
