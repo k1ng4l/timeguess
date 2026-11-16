@@ -1238,3 +1238,68 @@ button {
     .game-action-card { padding:18px; }
     .result-row { flex-wrap:wrap; }
 }
+
+
+/* Public profile lookup */
+.profile-lookup-card {
+    margin: 22px 0;
+    padding: 26px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px;
+    background: rgba(17,17,27,.78);
+}
+.profile-lookup-card h2 {
+    margin: 8px 0 6px;
+    color: #f4f3fa;
+    font-size: 21px;
+}
+.profile-lookup-card > p {
+    margin: 0 0 18px;
+    color: #9694a7;
+    font-size: 14px;
+}
+.profile-search-form {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+.profile-search-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px;
+    background: #10101a;
+    color: #fff;
+    font: inherit;
+}
+.profile-search-form button {
+    white-space: nowrap;
+}
+.profile-search-message {
+    min-height: 20px;
+    margin-top: 10px;
+    color: #b9b6c9;
+    font-size: 13px;
+}
+.public-profile-result {
+    margin-top: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    background: rgba(255,255,255,.025);
+}
+.public-profile-result .stats-grid {
+    margin-top: 18px;
+}
+@media (max-width: 600px) {
+    .profile-search-form {
+        flex-direction: column;
+    }
+    .profile-search-form button {
+        width: 100%;
+    }
+    .profile-lookup-card {
+        padding: 20px;
+    }
+}

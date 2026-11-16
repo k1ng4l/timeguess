@@ -522,6 +522,35 @@ async def my_profile(request: Request):
     return public_profile(user)
 
 
+@app.get("/api/profile/{profile_identifier}")
+async def public_profile_by_identifier(
+    profile_identifier: str,
+    request: Request
+):
+    # Публичная статистика доступна по публичному ID или имени пользователя.
+    await get_current_user(request)
+    identifier = profile_identifier.strip()
+    if not identifier or len(identifier) > 40:
+        raise HTTPException(status_code=404, detail="Профиль не найден.")
+
+    async with db_pool.acquire() as connection:
+        profile = await connection.fetchrow(
+            """
+            SELECT *
+            FROM profiles
+            WHERE public_id = $1
+               OR LOWER(username) = LOWER($1)
+            LIMIT 1
+            """,
+            identifier
+        )
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Профиль не найден.")
+
+    return public_profile(profile)
+
+
 # ==========================================
 # CREATE ROOM
 # ==========================================
@@ -968,8 +997,9 @@ async def get_game_state(code: str, request: Request):
         players = await get_room_players(connection, room["id"])
         state = _json_state(room["game_state"])
         public_state = dict(state)
-        if public_state.get("phase") not in {"round_finished", "finished"}:
+        if public_state.get("phase") == "choosing_target":
             public_state["target_time"] = None
+        if public_state.get("phase") not in {"round_finished", "finished"}:
             public_state["attempts"] = []
             public_state["last_results"] = []
         return {
@@ -1035,15 +1065,16 @@ async def submit_game_attempt(code: str, data: AttemptRequest, request: Request)
             })
             state["turn_index"] = index + 1
             if state["turn_index"] >= len(order):
-                winner_attempt = min(state["attempts"], key=lambda item: item["difference"])
-                winner_id = winner_attempt["player_id"]
-                state["winner_id"] = winner_id
+                best_difference = min(
+                    item["difference"] for item in state["attempts"]
+                )
+                best_attempts = [
+                    item for item in state["attempts"]
+                    if item["difference"] == best_difference
+                ]
                 state["phase"] = "round_finished"
                 state["last_results"] = state["attempts"]
-                await connection.execute(
-                    "UPDATE room_players SET score=score+1 WHERE room_id=$1 AND user_id=$2",
-                    room["id"], uuid.UUID(winner_id)
-                )
+
                 participant_ids = state.get("attempt_order", [])
                 if participant_ids:
                     await connection.execute(
@@ -1054,29 +1085,39 @@ async def submit_game_attempt(code: str, data: AttemptRequest, request: Request)
                         """,
                         [uuid.UUID(pid) for pid in participant_ids]
                     )
-                await connection.execute(
-                    "UPDATE profiles SET total_points=total_points+1 WHERE id=$1",
-                    uuid.UUID(winner_id)
-                )
-                winner_score = await connection.fetchval(
-                    "SELECT score FROM room_players WHERE room_id=$1 AND user_id=$2",
-                    room["id"], uuid.UUID(winner_id)
-                )
-                if winner_score >= room["target_score"]:
-                    state["phase"] = "finished"
-                    participant_ids = state.get("attempt_order", [])
-                    if participant_ids:
-                        await connection.execute(
-                            """
-                            UPDATE profiles
-                            SET
-                                games_played = games_played + 1,
-                                wins = wins + CASE WHEN id = $1 THEN 1 ELSE 0 END
-                            WHERE id = ANY($2::uuid[])
-                            """,
-                            uuid.UUID(winner_id),
-                            [uuid.UUID(pid) for pid in participant_ids]
-                        )
+
+                # При одинаковой разнице фиксируем ничью: победителя и очка нет.
+                if len(best_attempts) == 1:
+                    winner_id = best_attempts[0]["player_id"]
+                    state["winner_id"] = winner_id
+                    await connection.execute(
+                        "UPDATE room_players SET score=score+1 WHERE room_id=$1 AND user_id=$2",
+                        room["id"], uuid.UUID(winner_id)
+                    )
+                    await connection.execute(
+                        "UPDATE profiles SET total_points=total_points+1 WHERE id=$1",
+                        uuid.UUID(winner_id)
+                    )
+                    winner_score = await connection.fetchval(
+                        "SELECT score FROM room_players WHERE room_id=$1 AND user_id=$2",
+                        room["id"], uuid.UUID(winner_id)
+                    )
+                    if winner_score >= room["target_score"]:
+                        state["phase"] = "finished"
+                        if participant_ids:
+                            await connection.execute(
+                                """
+                                UPDATE profiles
+                                SET
+                                    games_played = games_played + 1,
+                                    wins = wins + CASE WHEN id = $1 THEN 1 ELSE 0 END
+                                WHERE id = ANY($2::uuid[])
+                                """,
+                                uuid.UUID(winner_id),
+                                [uuid.UUID(pid) for pid in participant_ids]
+                            )
+                else:
+                    state["winner_id"] = None
             await connection.execute(
                 "UPDATE game_rooms SET game_state=$1::jsonb, updated_at=NOW() WHERE id=$2",
                 json.dumps(state), room["id"]

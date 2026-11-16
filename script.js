@@ -178,6 +178,38 @@ document.addEventListener("DOMContentLoaded", () => {
         await restoreRoom();
     }
 
+    const profileSearchForm = $("profileSearchForm");
+    const profileSearchInput = $("profileSearchInput");
+    const profileSearchMessage = $("profileSearchMessage");
+    const publicProfileResult = $("publicProfileResult");
+
+    profileSearchForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const identifier = profileSearchInput?.value.trim();
+        if (!identifier) return;
+
+        setText(profileSearchMessage, "Ищем профиль...");
+        hide(publicProfileResult);
+
+        try {
+            const profile = await apiRequest(
+                `/api/profile/${encodeURIComponent(identifier)}`
+            );
+            setText(profileSearchMessage, "");
+            setText($("publicProfileUsername"), profile.username);
+            setText($("publicProfileId"), profile.public_id);
+            setText($("publicProfileAvatar"), (profile.username || "?").charAt(0).toUpperCase());
+            setText($("publicStatWins"), profile.wins ?? 0);
+            setText($("publicStatGames"), profile.games_played ?? 0);
+            setText($("publicStatRounds"), profile.rounds_played ?? 0);
+            setText($("publicStatWinRate"), `${Number(profile.win_percentage ?? 0).toFixed(1)}%`);
+            show(publicProfileResult);
+        } catch (error) {
+            setText(profileSearchMessage, error.message || "Профиль не найден.");
+        }
+    });
+
+
     async function initializeApp() {
         try {
             await loadProfile();
@@ -972,14 +1004,20 @@ document.addEventListener("DOMContentLoaded", () => {
         waitingPanel?.classList.add("hidden");
         roundResultPanel?.classList.add("hidden");
         finalPanel?.classList.add("hidden");
-        targetPanel?.classList.toggle("hidden", !["round_finished", "finished"].includes(phase));
+        const targetIsKnown = ["playing_turn", "round_finished", "finished"].includes(phase)
+            && game.target_time !== null && game.target_time !== undefined;
+        targetPanel?.classList.toggle("hidden", !targetIsKnown);
+        if (targetIsKnown) {
+            setText(targetTime, Number(game.target_time).toFixed(2));
+        }
 
         if (["round_finished", "finished"].includes(phase)) {
-            setText(targetTime, Number(game.target_time || 0).toFixed(2));
-            const winnerName = playerName(game.winner_id, players);
+            const winnerName = game.winner_id ? playerName(game.winner_id, players) : null;
             if (phase === "round_finished") {
                 roundResultPanel?.classList.remove("hidden");
-                setText(roundWinner, `${winnerName} выиграл раунд!`);
+                setText(roundWinner, winnerName
+                    ? `${winnerName} выиграл раунд!`
+                    : "Ничья! Никто не получает очко.");
                 if (roundResults) {
                     roundResults.replaceChildren();
                     (game.last_results || game.attempts || []).forEach((attempt, index) => {
@@ -1029,7 +1067,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 waitingPanel?.classList.remove("hidden");
                 setText(waitingTitle, `${playerName(currentId, players)} сейчас играет`);
-                setText(waitingText, "Твоя попытка будет следующей. Загаданное время пока скрыто.");
+                setText(waitingText, "Твоя попытка будет следующей. Загаданное время видно всем игрокам.");
                 if (lastTurnKey !== turnKey) {
                     attemptRunning = false;
                     lastTurnKey = turnKey;
