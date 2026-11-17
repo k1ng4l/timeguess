@@ -1,7 +1,7 @@
 <p align="center">
   <img src="assets/timeguess-logo.png" width="180">
 </p>
-# TIMEGUESS
+<h1 align="center">TIMEGUESS</h1>
 
 **Многопользовательская игра на чувство времени.**
 
