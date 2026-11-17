@@ -47,3 +47,9 @@ TIMEGUESS — онлайн-игра, в которой игроки провер
 <p align="center">
   Создано с увлечением.
 </p>
+
+## Скриншоты
+
+<p align="center">
+  <img src="assets/timeguess-main.png" width="800">
+</p>
