@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="assets/timeguess-logo.png" width="180">
+</p>
 # TIMEGUESS
 
 **Многопользовательская игра на чувство времени.**
