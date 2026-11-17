@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#09090f">
     <title>TIMEGUESS — Испытай точность</title>
-    <link rel="stylesheet" href="/style.css?v=4">
+    <link rel="stylesheet" href="/style.css?v=6">
 </head>
 <body>
 
@@ -84,7 +84,7 @@
                            placeholder="Придумай имя" minlength="3"
                            maxlength="20" autocomplete="username" required>
 
-                    <div class="input-hint">3–20 символов: буквы, цифры и _</div>
+                    <div class="input-hint">3–20 символов: латиница, цифры, точка и _</div>
 
                     <label for="registerPassword">Пароль</label>
                     <input id="registerPassword" type="password"
@@ -131,7 +131,6 @@
 
                     <div class="profile-identity">
                         <h2 id="profileUsername">Player</h2>
-                        <p id="profilePublicId">TG-0000000000</p>
                     </div>
 
                     <div class="profile-badge">PLAYER</div>
@@ -159,17 +158,83 @@
                         <span class="stat-value" id="statWinRate">0%</span>
                         <span class="stat-label">% побед</span>
                     </div>
+                    <div class="stat">
+                        <span class="stat-value" id="statPoints">0</span>
+                        <span class="stat-label">Всего очков</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="statStreak">0</span>
+                        <span class="stat-label">Лучшая серия</span>
+                    </div>
                 </div>
+                <div class="profile-meta">В TIMEGUESS с <span id="profileRegisteredAt">—</span></div>
             </div>
 
+            <!-- PROFILE SETTINGS -->
+            <section class="profile-settings-card">
+                <div class="section-label">ACCOUNT SETTINGS</div>
+                <h2>Настройки профиля</h2>
+                <p class="settings-description">Управляй именем пользователя и аватаркой.</p>
+
+                <div class="profile-settings-grid">
+                    <div class="profile-setting-block">
+                        <h3>Аватарка</h3>
+                        <p>Выбери изображение. Оно будет автоматически уменьшено и сохранено в профиле.</p>
+                        <input id="avatarFileInput" class="avatar-file-input" type="file" accept="image/jpeg,image/png,image/webp">
+                        <div class="avatar-actions">
+                            <button id="saveAvatarButton" class="primary-button" type="button" disabled>Сохранить аватарку</button>
+                            <button id="deleteAvatarButton" class="secondary-button" type="button">Удалить</button>
+                        </div>
+                        <div id="avatarMessage" class="settings-message" aria-live="polite"></div>
+                    </div>
+
+                    <div class="profile-setting-block">
+                        <h3>Имя пользователя</h3>
+                        <p>Для смены имени подтверди текущий пароль.</p>
+                        <form id="usernameChangeForm" class="username-change-form">
+                            <label for="newUsernameInput">Новое имя пользователя</label>
+                            <input id="newUsernameInput" type="text" minlength="3" maxlength="20" autocomplete="off" placeholder="Новое имя" required>
+                            <label for="usernameCurrentPassword">Текущий пароль</label>
+                            <input id="usernameCurrentPassword" type="password" minlength="8" maxlength="128" autocomplete="current-password" placeholder="Твой пароль" required>
+                            <button class="primary-button" type="submit">Изменить username</button>
+                        </form>
+                        <div id="usernameChangeMessage" class="settings-message" aria-live="polite"></div>
+                        <p id="usernameCooldown" class="settings-description"></p>
+                    </div>
+
+                    <div class="profile-setting-block privacy-settings-block">
+                        <h3>Приватность профиля</h3>
+                        <p>Выбери, какие данные будут видны другим игрокам. Твоя статистика продолжит сохраняться в любом случае.</p>
+                        <div class="privacy-options">
+                            <label><input type="checkbox" id="privacyWins" checked> Победы</label>
+                            <label><input type="checkbox" id="privacyGames" checked> Сыгранные игры</label>
+                            <label><input type="checkbox" id="privacyRounds" checked> Раунды</label>
+                            <label><input type="checkbox" id="privacyWinRate" checked> Процент побед</label>
+                            <label><input type="checkbox" id="privacyPoints" checked> Очки</label>
+                            <label><input type="checkbox" id="privacyStreak" checked> Лучшая серия</label>
+                            <label><input type="checkbox" id="privacyRegistered" checked> Дата регистрации</label>
+                            <label><input type="checkbox" id="privacyHistory" checked> История матчей</label>
+                        </div>
+                        <button id="savePrivacyButton" class="primary-button" type="button">Сохранить приватность</button>
+                        <div id="privacyMessage" class="settings-message" aria-live="polite"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-lookup-card match-history-card">
+                <div class="section-label">MATCH HISTORY</div>
+                <h2>Мои последние матчи</h2>
+                <div id="myMatchHistory" class="match-history-list"><p class="history-empty">Здесь появятся завершённые матчи.</p></div>
+            </section>
+
             <!-- PUBLIC PROFILE SEARCH -->
-            <section class="profile-lookup-card">
+            <section class="profile-lookup-card" id="profileLookupAnchor">
                 <div class="section-label">PLAYER PROFILES</div>
                 <h2>Статистика игроков</h2>
-                <p>Найди профиль по имени пользователя или публичному ID.</p>
+                <p>Найди профиль по имени пользователя.</p>
                 <form id="profileSearchForm" class="profile-search-form">
                     <input id="profileSearchInput" type="text"
-                           placeholder="Имя пользователя или TG-ID"
+                           placeholder="Имя пользователя"
                            maxlength="40" autocomplete="off" required>
                     <button class="primary-button" type="submit">Найти профиль →</button>
                 </form>
@@ -179,7 +244,6 @@
                         <div class="avatar" id="publicProfileAvatar">P</div>
                         <div class="profile-identity">
                             <h3 id="publicProfileUsername">Player</h3>
-                            <p id="publicProfileId">TG-ID</p>
                         </div>
                         <div class="profile-badge">PLAYER</div>
                     </div>
@@ -189,6 +253,13 @@
                         <div class="stat"><span class="stat-value" id="publicStatGames">0</span><span class="stat-label">Игр</span></div>
                         <div class="stat"><span class="stat-value" id="publicStatRounds">0</span><span class="stat-label">Раундов</span></div>
                         <div class="stat"><span class="stat-value" id="publicStatWinRate">0%</span><span class="stat-label">% побед</span></div>
+                        <div class="stat"><span class="stat-value" id="publicStatPoints">0</span><span class="stat-label">Всего очков</span></div>
+                        <div class="stat"><span class="stat-value" id="publicStatStreak">0</span><span class="stat-label">Лучшая серия</span></div>
+                    </div>
+                    <div class="profile-meta">В TIMEGUESS с <span id="publicProfileRegisteredAt">—</span></div>
+                    <div class="public-history-wrap">
+                        <h3>Последние матчи</h3>
+                        <div id="publicMatchHistory" class="match-history-list"></div>
                     </div>
                 </div>
             </section>
@@ -300,12 +371,12 @@
 
         <div class="room-info">
             <span>Игроков</span>
-            <strong id="lobbyPlayerCount">1 / 4</strong>
+            <strong id="lobbyPlayerCount">1 / 7</strong>
         </div>
 
         <div class="lobby-players-heading">
             <h3>Участники</h3>
-            <span>МАКС. 4</span>
+            <span>МАКС. 7</span>
         </div>
 
         <div id="lobbyPlayers" class="lobby-players"></div>
@@ -390,6 +461,6 @@
     </section>
 
 </section>
-<script src="/script.js?v=4" defer></script>
+<script src="/script.js?v=6" defer></script>
 </body>
 </html>

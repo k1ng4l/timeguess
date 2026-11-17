@@ -31,6 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
         element.className = type ? `auth-message ${type}` : "auth-message";
     };
 
+    const setSettingsMessage = (element, message, type = "") => {
+        if (!element) return;
+        element.textContent = message;
+        element.className = type ? `settings-message ${type}` : "settings-message";
+    };
+
     async function apiRequest(url, options = {}) {
         const config = {
             method: options.method || "GET",
@@ -139,32 +145,129 @@ document.addEventListener("DOMContentLoaded", () => {
     // PROFILE
     // ----------------------------------------
 
+    function setAvatar(element, username, avatarData) {
+        if (!element) return;
+        if (avatarData) {
+            element.textContent = "";
+            element.style.backgroundImage = `url("${avatarData}")`;
+            element.classList.add("has-avatar-image");
+        } else {
+            element.style.backgroundImage = "";
+            element.classList.remove("has-avatar-image");
+            element.textContent = (username || "?").charAt(0).toUpperCase();
+        }
+    }
+
+    function formatRegisteredAt(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+        return date.toLocaleDateString("ru-RU", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        });
+    }
+
+    function renderMatchHistory(container, matches, hidden = false) {
+        if (!container) return;
+        container.replaceChildren();
+        if (hidden) {
+            const message = document.createElement("p");
+            message.className = "history-empty";
+            message.textContent = "Игрок скрыл историю матчей.";
+            container.append(message);
+            return;
+        }
+        if (!matches?.length) {
+            const message = document.createElement("p");
+            message.className = "history-empty";
+            message.textContent = "Завершённых матчей пока нет.";
+            container.append(message);
+            return;
+        }
+        matches.forEach((match) => {
+            const card = document.createElement("article");
+            card.className = "match-history-item";
+            const heading = document.createElement("div");
+            heading.className = "match-history-heading";
+            const result = document.createElement("strong");
+            result.textContent = match.won ? "Победа" : "Поражение";
+            result.className = match.won ? "history-win" : "history-loss";
+            const date = document.createElement("time");
+            date.textContent = formatRegisteredAt(match.finished_at);
+            heading.append(result, date);
+            const details = document.createElement("p");
+            details.textContent = `Твой счёт: ${match.final_score} очк.`;
+            const players = document.createElement("small");
+            players.textContent = (match.players || [])
+                .map(player => `${player.username}: ${player.score}`)
+                .join(" · ");
+            card.append(heading, details, players);
+            container.append(card);
+        });
+    }
+
+    async function loadMatchHistory(username, container) {
+        try {
+            const result = await apiRequest(
+                `/api/profile/${encodeURIComponent(username)}/history`
+            );
+            renderMatchHistory(container, result.matches, result.hidden);
+        } catch {
+            renderMatchHistory(container, []);
+        }
+    }
+
+    function syncPrivacyControls(profile) {
+        const visibility = profile?.visibility || {};
+        const ids = {
+            wins: "privacyWins",
+            games_played: "privacyGames",
+            rounds_played: "privacyRounds",
+            win_percentage: "privacyWinRate",
+            total_points: "privacyPoints",
+            longest_streak: "privacyStreak",
+            registered_at: "privacyRegistered",
+            match_history: "privacyHistory"
+        };
+        Object.entries(ids).forEach(([key, id]) => {
+            const control = $(id);
+            if (control) control.checked = visibility[key] !== false;
+        });
+    }
+
     function renderProfile(user) {
         currentUser = user;
         currentUserId = user.id || null;
 
         setText($("welcomeUsername"), user.username);
         setText($("profileUsername"), user.username);
-        setText($("profilePublicId"), user.public_id);
-
-        const avatar = $("profileAvatar");
-
-        if (avatar) {
-            avatar.textContent = (user.username || "?")
-                .charAt(0)
-                .toUpperCase();
-        }
+        setAvatar($("profileAvatar"), user.username, user.avatar_data);
 
         setText($("statWins"), user.wins ?? 0);
         setText($("statGames"), user.games_played ?? 0);
         setText($("statRounds"), user.rounds_played ?? 0);
+        setText($("statPoints"), user.total_points ?? 0);
+        setText($("statStreak"), user.longest_streak ?? 0);
+        setText($("profileRegisteredAt"), formatRegisteredAt(user.registered_at));
 
         const winRate = Number(user.win_percentage ?? 0);
+        setText($("statWinRate"), `${winRate.toFixed(1)}%`);
+        syncPrivacyControls(user);
 
-        setText(
-            $("statWinRate"),
-            `${winRate.toFixed(1)}%`
-        );
+        const cooldown = $("usernameCooldown");
+        const usernameButton = usernameChangeForm?.querySelector('button[type="submit"]');
+        let canChange = true;
+        if (user.username_changed_at) {
+            const availableAt = new Date(new Date(user.username_changed_at).getTime() + 14 * 86400000);
+            if (availableAt > new Date()) {
+                canChange = false;
+                if (cooldown) cooldown.textContent = `Следующая смена username: ${availableAt.toLocaleString("ru-RU")}`;
+            }
+        }
+        if (canChange && cooldown) cooldown.textContent = "Username можно менять раз в 14 дней.";
+        if (usernameButton) usernameButton.disabled = !canChange;
     }
 
     async function loadProfile() {
@@ -175,6 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
         hide(authScreen);
         show(dashboardScreen);
 
+        await loadMatchHistory(user.username, $("myMatchHistory"));
         await restoreRoom();
     }
 
@@ -182,6 +286,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileSearchInput = $("profileSearchInput");
     const profileSearchMessage = $("profileSearchMessage");
     const publicProfileResult = $("publicProfileResult");
+
+    function displayPublicProfile(profile) {
+        setText($("publicProfileUsername"), profile.username);
+        setAvatar($("publicProfileAvatar"), profile.username, profile.avatar_data);
+        setText($("publicStatWins"), profile.wins ?? "—");
+        setText($("publicStatGames"), profile.games_played ?? "—");
+        setText($("publicStatRounds"), profile.rounds_played ?? "—");
+        setText($("publicStatWinRate"), profile.win_percentage == null ? "—" : `${Number(profile.win_percentage).toFixed(1)}%`);
+        setText($("publicStatPoints"), profile.total_points ?? "—");
+        setText($("publicStatStreak"), profile.longest_streak ?? "—");
+        setText($("publicProfileRegisteredAt"), profile.registered_at ? formatRegisteredAt(profile.registered_at) : "—");
+        show(publicProfileResult);
+        loadMatchHistory(profile.username, $("publicMatchHistory"));
+    }
+
+    async function openProfileByUsername(username) {
+        if (!username) return;
+        try {
+            const profile = await apiRequest(`/api/profile/${encodeURIComponent(username)}`);
+            setText(profileSearchMessage, "");
+            displayPublicProfile(profile);
+            $("profileLookupAnchor")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        } catch (error) {
+            setText(profileSearchMessage, error.message || "Профиль не найден.");
+        }
+    }
 
     profileSearchForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -196,19 +326,187 @@ document.addEventListener("DOMContentLoaded", () => {
                 `/api/profile/${encodeURIComponent(identifier)}`
             );
             setText(profileSearchMessage, "");
-            setText($("publicProfileUsername"), profile.username);
-            setText($("publicProfileId"), profile.public_id);
-            setText($("publicProfileAvatar"), (profile.username || "?").charAt(0).toUpperCase());
-            setText($("publicStatWins"), profile.wins ?? 0);
-            setText($("publicStatGames"), profile.games_played ?? 0);
-            setText($("publicStatRounds"), profile.rounds_played ?? 0);
-            setText($("publicStatWinRate"), `${Number(profile.win_percentage ?? 0).toFixed(1)}%`);
-            show(publicProfileResult);
+            displayPublicProfile(profile);
         } catch (error) {
             setText(profileSearchMessage, error.message || "Профиль не найден.");
         }
     });
 
+    // ----------------------------------------
+    // PROFILE SETTINGS: USERNAME + AVATAR
+    // ----------------------------------------
+
+    const usernameChangeForm = $("usernameChangeForm");
+    const usernameChangeMessage = $("usernameChangeMessage");
+    const avatarFileInput = $("avatarFileInput");
+    const saveAvatarButton = $("saveAvatarButton");
+    const deleteAvatarButton = $("deleteAvatarButton");
+    const avatarMessage = $("avatarMessage");
+    let pendingAvatarData = null;
+
+    usernameChangeForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const username = $("newUsernameInput")?.value.trim();
+        const currentPassword = $("usernameCurrentPassword")?.value;
+        if (!username || !currentPassword) return;
+
+        const submitButton = usernameChangeForm.querySelector('button[type="submit"]');
+        const oldText = submitButton?.textContent || "Изменить username";
+        setSettingsMessage(usernameChangeMessage, "Обновляем имя пользователя...");
+        setLoading(submitButton, true, "Сохраняем...", oldText);
+
+        try {
+            const result = await apiRequest("/api/profile/username", {
+                method: "PATCH",
+                body: jsonBody({ username, current_password: currentPassword })
+            });
+            renderProfile(result.profile);
+            usernameChangeForm.reset();
+            setSettingsMessage(usernameChangeMessage, result.message || "Username обновлён.", "success");
+        } catch (error) {
+            setSettingsMessage(usernameChangeMessage, error.message || "Не удалось изменить username.");
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = oldText;
+            }
+        }
+    });
+
+    const savePrivacyButton = $("savePrivacyButton");
+    const privacyMessage = $("privacyMessage");
+    savePrivacyButton?.addEventListener("click", async () => {
+        const payload = {
+            show_wins: $("privacyWins")?.checked ?? true,
+            show_games_played: $("privacyGames")?.checked ?? true,
+            show_rounds_played: $("privacyRounds")?.checked ?? true,
+            show_win_percentage: $("privacyWinRate")?.checked ?? true,
+            show_total_points: $("privacyPoints")?.checked ?? true,
+            show_longest_streak: $("privacyStreak")?.checked ?? true,
+            show_registered_at: $("privacyRegistered")?.checked ?? true,
+            show_match_history: $("privacyHistory")?.checked ?? true
+        };
+        savePrivacyButton.disabled = true;
+        const oldText = savePrivacyButton.textContent;
+        savePrivacyButton.textContent = "Сохраняем...";
+        try {
+            const result = await apiRequest("/api/profile/privacy", {
+                method: "PATCH",
+                body: jsonBody(payload)
+            });
+            renderProfile(result.profile);
+            setSettingsMessage(privacyMessage, "Настройки приватности сохранены.", "success");
+        } catch (error) {
+            setSettingsMessage(privacyMessage, error.message || "Не удалось сохранить настройки.");
+        } finally {
+            savePrivacyButton.disabled = false;
+            savePrivacyButton.textContent = oldText;
+        }
+    });
+
+    async function makeAvatarData(file) {
+        if (!file.type.startsWith("image/")) {
+            throw new Error("Выбери файл изображения.");
+        }
+        if (file.size > 8 * 1024 * 1024) {
+            throw new Error("Исходное изображение должно быть меньше 8 МБ.");
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        try {
+            const image = new Image();
+            await new Promise((resolve, reject) => {
+                image.onload = resolve;
+                image.onerror = () => reject(new Error("Не удалось открыть изображение."));
+                image.src = objectUrl;
+            });
+
+            const side = 256;
+            const canvas = document.createElement("canvas");
+            canvas.width = side;
+            canvas.height = side;
+            const context = canvas.getContext("2d");
+            if (!context) throw new Error("Браузер не смог обработать изображение.");
+
+            const cropSide = Math.min(image.naturalWidth, image.naturalHeight);
+            const cropX = (image.naturalWidth - cropSide) / 2;
+            const cropY = (image.naturalHeight - cropSide) / 2;
+            context.drawImage(image, cropX, cropY, cropSide, cropSide, 0, 0, side, side);
+
+            let dataUrl = canvas.toDataURL("image/jpeg", 0.84);
+            if (dataUrl.length > 450_000) dataUrl = canvas.toDataURL("image/jpeg", 0.68);
+            if (dataUrl.length > 450_000) throw new Error("Изображение слишком сложное. Выбери другое.");
+            return dataUrl;
+        } finally {
+            URL.revokeObjectURL(objectUrl);
+        }
+    }
+
+    avatarFileInput?.addEventListener("change", async () => {
+        const file = avatarFileInput.files?.[0];
+        pendingAvatarData = null;
+        if (!file) {
+            if (saveAvatarButton) saveAvatarButton.disabled = true;
+            return;
+        }
+
+        setSettingsMessage(avatarMessage, "Подготавливаем изображение...");
+        if (saveAvatarButton) saveAvatarButton.disabled = true;
+        try {
+            pendingAvatarData = await makeAvatarData(file);
+            setAvatar($("profileAvatar"), currentUser?.username, pendingAvatarData);
+            if (saveAvatarButton) saveAvatarButton.disabled = false;
+            setSettingsMessage(avatarMessage, "Предпросмотр готов. Нажми «Сохранить аватарку».");
+        } catch (error) {
+            setSettingsMessage(avatarMessage, error.message || "Не удалось обработать изображение.");
+            avatarFileInput.value = "";
+        }
+    });
+
+    saveAvatarButton?.addEventListener("click", async () => {
+        if (!pendingAvatarData) return;
+        saveAvatarButton.disabled = true;
+        const oldText = saveAvatarButton.textContent;
+        saveAvatarButton.textContent = "Сохраняем...";
+        try {
+            const result = await apiRequest("/api/profile/avatar", {
+                method: "PUT",
+                body: jsonBody({ avatar_data: pendingAvatarData })
+            });
+            pendingAvatarData = null;
+            if (avatarFileInput) avatarFileInput.value = "";
+            renderProfile(result.profile);
+            setSettingsMessage(avatarMessage, result.message || "Аватарка сохранена.", "success");
+        } catch (error) {
+            setSettingsMessage(avatarMessage, error.message || "Не удалось сохранить аватарку.");
+            saveAvatarButton.disabled = false;
+        } finally {
+            saveAvatarButton.textContent = oldText;
+        }
+    });
+
+    deleteAvatarButton?.addEventListener("click", async () => {
+        if (!currentUser?.avatar_data && !pendingAvatarData) {
+            setSettingsMessage(avatarMessage, "У тебя пока нет загруженной аватарки.");
+            return;
+        }
+        deleteAvatarButton.disabled = true;
+        try {
+            const result = await apiRequest("/api/profile/avatar", {
+                method: "PUT",
+                body: jsonBody({ avatar_data: null })
+            });
+            pendingAvatarData = null;
+            if (avatarFileInput) avatarFileInput.value = "";
+            if (saveAvatarButton) saveAvatarButton.disabled = true;
+            renderProfile(result.profile);
+            setSettingsMessage(avatarMessage, result.message || "Аватарка удалена.", "success");
+        } catch (error) {
+            setSettingsMessage(avatarMessage, error.message || "Не удалось удалить аватарку.");
+        } finally {
+            deleteAvatarButton.disabled = false;
+        }
+    });
 
     async function initializeApp() {
         try {
@@ -466,7 +764,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             ...room,
             player_count: room.player_count ?? room.players?.length ?? 0,
-            max_players: room.max_players ?? 4,
+            max_players: room.max_players ?? 7,
             players: Array.isArray(room.players) ? room.players : []
         };
     }
@@ -669,15 +967,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 card.className = "lobby-player";
 
                 const avatar = document.createElement("div");
-                avatar.className = "lobby-player-avatar";
+                avatar.className = "lobby-player-avatar profile-open-trigger";
                 avatar.textContent =
                     (player.username || "?").charAt(0).toUpperCase();
+                avatar.setAttribute("role", "button");
+                avatar.setAttribute("tabindex", "0");
+                avatar.setAttribute("aria-label", `Открыть профиль ${player.username || "игрока"}`);
+                avatar.addEventListener("click", () => openProfileByUsername(player.username));
+                avatar.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openProfileByUsername(player.username);
+                    }
+                });
 
                 const info = document.createElement("div");
                 info.className = "lobby-player-info";
 
                 const name = document.createElement("strong");
                 name.textContent = player.username || "Игрок";
+                name.classList.add("profile-open-trigger");
+                name.setAttribute("role", "button");
+                name.setAttribute("tabindex", "0");
+                name.addEventListener("click", () => openProfileByUsername(player.username));
+                name.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openProfileByUsername(player.username);
+                    }
+                });
 
                 const role = document.createElement("span");
 
@@ -1233,6 +1551,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 activeRoom = null;
                 currentUser = null;
                 currentUserId = null;
+                pendingAvatarData = null;
 
                 try {
                     sessionStorage.removeItem("timeguess_room");

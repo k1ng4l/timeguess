@@ -1331,3 +1331,213 @@ button {
         white-space: nowrap;
     }
 }
+
+
+/* TIMEGUESS 2.2 — profile settings */
+.avatar {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.avatar.has-avatar-image {
+    color: transparent;
+}
+
+.profile-meta {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.profile-settings-card {
+    margin: 22px 0;
+    padding: 26px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: rgba(17, 17, 27, .82);
+}
+
+.profile-settings-card > h2 {
+    margin: 8px 0 6px;
+    color: #f4f3fa;
+    font-size: 21px;
+}
+
+.settings-description,
+.profile-setting-block > p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.settings-description {
+    margin-bottom: 20px;
+}
+
+.profile-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.profile-setting-block {
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, .025);
+}
+
+.profile-setting-block h3 {
+    margin-bottom: 7px;
+    font-size: 16px;
+}
+
+.profile-setting-block > p {
+    margin-bottom: 15px;
+}
+
+.avatar-file-input,
+.username-change-form input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    background: #10101a;
+    color: #fff;
+    font: inherit;
+}
+
+.avatar-file-input {
+    font-size: 12px;
+}
+
+.avatar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.avatar-actions button,
+.username-change-form button {
+    min-height: 44px;
+}
+
+.username-change-form {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.username-change-form label {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.settings-message {
+    min-height: 18px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.settings-message.success {
+    color: var(--success);
+}
+
+@media (max-width: 700px) {
+    .profile-settings-card {
+        padding: 19px;
+    }
+
+    .profile-settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.profile-open-trigger {
+    cursor: pointer;
+}
+
+.profile-open-trigger:hover {
+    filter: brightness(1.18);
+}
+
+.profile-open-trigger:focus-visible {
+    outline: 2px solid var(--accent-light);
+    outline-offset: 3px;
+}
+
+
+/* TIMEGUESS 2.2 — stage 3 */
+.privacy-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    margin: 16px 0;
+}
+.privacy-options label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text, #e8e8f0);
+    font-size: 14px;
+}
+.privacy-options input {
+    accent-color: var(--accent, #8b7cff);
+}
+.match-history-card {
+    margin-top: 18px;
+}
+.match-history-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+.match-history-item {
+    padding: 13px 15px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,.025);
+}
+.match-history-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+.match-history-heading time,
+.match-history-item small,
+.history-empty {
+    color: var(--muted, #9292a5);
+    font-size: 12px;
+}
+.match-history-item p {
+    margin: 8px 0 4px;
+}
+.match-history-item small {
+    display: block;
+    line-height: 1.5;
+}
+.history-win { color: #66d6a3; }
+.history-loss { color: #e99a9a; }
+.public-history-wrap {
+    margin-top: 18px;
+}
+.public-history-wrap h3 {
+    margin-bottom: 8px;
+}
+@media (max-width: 600px) {
+    .privacy-options { grid-template-columns: 1fr; }
+}
