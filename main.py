@@ -18,11 +18,6 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-
-# ==========================================
-# CONFIGURATION
-# ==========================================
-
 BASE_DIR = Path(__file__).resolve().parent
 
 load_dotenv(BASE_DIR / ".env")
@@ -32,7 +27,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 SESSION_DURATION_DAYS = 30
 COOKIE_NAME = "timeguess_session"
 
-# This existing account is allowed to use Cyrillic characters.
 SPECIAL_CYRILLIC_USER_ID = uuid.UUID(
     "3baebcf5-4744-4f7b-9298-97b8a0b56083"
 )
@@ -45,11 +39,6 @@ ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 password_hasher = PasswordHasher()
 db_pool = None
-
-
-# ==========================================
-# DATABASE
-# ==========================================
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -76,36 +65,26 @@ async def lifespan(app: FastAPI):
         await db_pool.close()
         print("TIMEGUESS DATABASE: DISCONNECTED")
 
-
 app = FastAPI(
     title="TIMEGUESS",
     version="2.2.0",
     lifespan=lifespan
 )
 
-
-# ==========================================
-# REQUEST MODELS
-# ==========================================
-
 class RegisterRequest(BaseModel):
     username: str = Field(min_length=3, max_length=20)
     password: str = Field(min_length=8, max_length=128)
-
 
 class LoginRequest(BaseModel):
     username: str = Field(min_length=3, max_length=20)
     password: str = Field(min_length=8, max_length=128)
 
-
 class ChangeUsernameRequest(BaseModel):
     username: str = Field(min_length=3, max_length=20)
     current_password: str = Field(min_length=8, max_length=128)
 
-
 class AvatarRequest(BaseModel):
     avatar_data: str | None = Field(..., max_length=500_000)
-
 
 class PrivacyRequest(BaseModel):
     show_wins: bool
@@ -117,22 +96,14 @@ class PrivacyRequest(BaseModel):
     show_registered_at: bool
     show_match_history: bool
 
-
 class CreateRoomRequest(BaseModel):
     target_score: int = Field(default=7, ge=1, le=20)
-
 
 class JoinRoomRequest(BaseModel):
     code: str = Field(min_length=6, max_length=6)
 
-
-# ==========================================
-# HELPERS
-# ==========================================
-
 def normalize_username(username: str) -> str:
     return username.strip()
-
 
 async def is_reserved_username(connection, username: str) -> bool:
     return await connection.fetchval(
@@ -145,7 +116,6 @@ async def is_reserved_username(connection, username: str) -> bool:
         """,
         username
     )
-
 
 def validate_username(
     username: str,
@@ -171,20 +141,16 @@ def validate_username(
             detail=error_message
         )
 
-
 def normalize_room_code(code: str) -> str:
     return code.strip().upper()
 
-
 def generate_session_token() -> str:
     return secrets.token_urlsafe(48)
-
 
 def hash_session_token(token: str) -> str:
     return hashlib.sha256(
         token.encode("utf-8")
     ).hexdigest()
-
 
 def set_session_cookie(
     response: Response,
@@ -210,7 +176,6 @@ def set_session_cookie(
         path="/"
     )
 
-
 def delete_session_cookie(response: Response):
     response.delete_cookie(
         key=COOKIE_NAME,
@@ -218,7 +183,6 @@ def delete_session_cookie(response: Response):
         samesite="lax",
         path="/"
     )
-
 
 def public_profile(row, is_owner=True):
     visibility = {
@@ -265,7 +229,6 @@ def public_profile(row, is_owner=True):
         )
     }
 
-
 def room_player_data(row):
     return {
         "user_id": str(row["user_id"]),
@@ -273,7 +236,6 @@ def room_player_data(row):
         "connected": row["connected"],
         "score": row["score"]
     }
-
 
 async def create_session(connection, user_id: uuid.UUID):
     token = generate_session_token()
@@ -300,7 +262,6 @@ async def create_session(connection, user_id: uuid.UUID):
 
     return token
 
-
 async def get_room_by_code(connection, code: str):
     return await connection.fetchrow(
         """
@@ -319,7 +280,6 @@ async def get_room_by_code(connection, code: str):
         code
     )
 
-
 async def get_room_players(connection, room_id):
     return await connection.fetch(
         """
@@ -335,7 +295,6 @@ async def get_room_players(connection, room_id):
         """,
         room_id
     )
-
 
 async def build_room_response(connection, room):
     players = await get_room_players(
@@ -361,11 +320,6 @@ async def build_room_response(connection, room):
             "created_at": room["created_at"].isoformat()
         }
     }
-
-
-# ==========================================
-# AUTHENTICATION
-# ==========================================
 
 async def get_current_user(request: Request):
     token = request.cookies.get(COOKIE_NAME)
@@ -419,11 +373,6 @@ async def get_current_user(request: Request):
 
     return row
 
-
-# ==========================================
-# REGISTER
-# ==========================================
-
 @app.post("/api/auth/register")
 async def register(
     data: RegisterRequest,
@@ -440,7 +389,6 @@ async def register(
         async with db_pool.acquire() as connection:
             async with connection.transaction():
 
-                # Проверка зарезервированных имён.
                 if await is_reserved_username(connection, username):
                     raise HTTPException(
                         status_code=409,
@@ -486,11 +434,6 @@ async def register(
         "message": "Аккаунт успешно создан.",
         "user_id": str(user_id)
     }
-
-
-# ==========================================
-# LOGIN
-# ==========================================
 
 @app.post("/api/auth/login")
 async def login(
@@ -559,11 +502,6 @@ async def login(
         "message": "Вы успешно вошли."
     }
 
-
-# ==========================================
-# LOGOUT
-# ==========================================
-
 @app.post("/api/auth/logout")
 async def logout(
     request: Request,
@@ -593,11 +531,6 @@ async def logout(
         "message": "Вы вышли из аккаунта."
     }
 
-
-# ==========================================
-# CURRENT USER
-# ==========================================
-
 @app.get("/api/auth/me")
 async def current_user(request: Request):
     user = await get_current_user(request)
@@ -607,16 +540,10 @@ async def current_user(request: Request):
         "user": public_profile(user)
     }
 
-
-# ==========================================
-# PROFILE
-# ==========================================
-
 @app.get("/api/profile/me")
 async def my_profile(request: Request):
     user = await get_current_user(request)
     return public_profile(user)
-
 
 @app.get("/api/profile/{profile_identifier}")
 async def public_profile_by_identifier(
@@ -652,7 +579,6 @@ async def public_profile_by_identifier(
 
     return public_profile(profile, is_owner=False)
 
-
 @app.patch("/api/profile/username")
 async def change_username(
     data: ChangeUsernameRequest,
@@ -684,7 +610,6 @@ async def change_username(
                     detail="Это уже ваше имя пользователя."
                 )
 
-            # Проверка зарезервированных имён.
             if await is_reserved_username(connection, new_username):
                 raise HTTPException(
                     status_code=409,
@@ -772,7 +697,6 @@ async def change_username(
         "profile": public_profile(updated)
     }
 
-
 @app.patch("/api/profile/privacy")
 async def update_profile_privacy(
     data: PrivacyRequest,
@@ -810,7 +734,6 @@ async def update_profile_privacy(
         "success": True,
         "profile": public_profile(updated)
     }
-
 
 @app.get("/api/profile/{profile_identifier}/history")
 async def profile_match_history(
@@ -905,7 +828,6 @@ async def profile_match_history(
         "matches": matches
     }
 
-
 @app.put("/api/profile/avatar")
 async def update_avatar(
     data: AvatarRequest,
@@ -983,11 +905,6 @@ async def update_avatar(
         ),
         "profile": public_profile(updated)
     }
-
-
-# ==========================================
-# CREATE ROOM
-# ==========================================
 
 @app.post("/api/rooms")
 async def create_room(
@@ -1068,11 +985,6 @@ async def create_room(
         status_code=503,
         detail="Не удалось создать комнату. Попробуйте ещё раз."
     )
-
-
-# ==========================================
-# JOIN ROOM
-# ==========================================
 
 @app.post("/api/rooms/join")
 async def join_room(
@@ -1169,11 +1081,6 @@ async def join_room(
             room
         )
 
-
-# ==========================================
-# GET ROOM / REFRESH LOBBY
-# ==========================================
-
 @app.get("/api/rooms/{code}")
 async def get_room(
     code: str,
@@ -1224,11 +1131,6 @@ async def get_room(
             room
         )
 
-
-# ==========================================
-# LEAVE ROOM
-# ==========================================
-
 @app.post("/api/rooms/{code}/leave")
 async def leave_room(
     code: str,
@@ -1266,11 +1168,6 @@ async def leave_room(
         "success": True,
         "message": "Вы вышли из комнаты."
     }
-
-
-# ==========================================
-# START ROOM
-# ==========================================
 
 @app.post("/api/rooms/{code}/start")
 async def start_room(
@@ -1397,19 +1294,12 @@ async def start_room(
         "status": "playing"
     }
 
-
-# ==========================================
-# TIMEGUESS GAME ENGINE
-# ==========================================
-
 class TargetTimeRequest(BaseModel):
     random: bool = False
     value: float | None = None
 
-
 class AttemptRequest(BaseModel):
     value: float = Field(ge=0, le=60)
-
 
 def _json_state(raw):
     if isinstance(raw, dict):
@@ -1422,7 +1312,6 @@ def _json_state(raw):
             return {}
 
     return {}
-
 
 def _new_round_state(state, player_ids):
     round_number = int(state.get("round", 0)) + 1
@@ -1447,7 +1336,6 @@ def _new_round_state(state, player_ids):
         "winner_id": None,
         "last_results": []
     }
-
 
 async def _load_member_room(
     connection,
@@ -1488,7 +1376,6 @@ async def _load_member_room(
         )
 
     return room
-
 
 @app.get("/api/rooms/{code}/game")
 async def get_game_state(
@@ -1540,7 +1427,6 @@ async def get_game_state(
             "target_score": room["target_score"],
             "my_id": str(user["id"])
         }
-
 
 @app.post("/api/rooms/{code}/target")
 async def set_game_target(
@@ -1629,7 +1515,6 @@ async def set_game_target(
             )
 
     return {"success": True}
-
 
 @app.post("/api/rooms/{code}/attempt")
 async def submit_game_attempt(
@@ -1731,7 +1616,6 @@ async def submit_game_attempt(
                         ]
                     )
 
-                # При одинаковой разнице фиксируем ничью.
                 if len(best_attempts) == 1:
                     winner_id = best_attempts[0]["player_id"]
                     state["winner_id"] = winner_id
@@ -1842,7 +1726,6 @@ async def submit_game_attempt(
 
     return {"success": True}
 
-
 @app.post("/api/rooms/{code}/next-round")
 async def next_game_round(
     code: str,
@@ -1903,11 +1786,6 @@ async def next_game_round(
 
     return {"success": True}
 
-
-# ==========================================
-# HEALTH CHECK
-# ==========================================
-
 @app.get("/api/health")
 async def health():
     try:
@@ -1926,20 +1804,13 @@ async def health():
             detail="Database connection failed."
         )
 
-
-# ==========================================
-# WEBSITE
-# ==========================================
-
 @app.get("/")
 async def home():
     return FileResponse(BASE_DIR / "index.html")
 
-
 @app.get("/style.css")
 async def css():
     return FileResponse(BASE_DIR / "style.css")
-
 
 @app.get("/script.js")
 async def javascript():

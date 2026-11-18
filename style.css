@@ -69,8 +69,6 @@ button {
     display: none !important;
 }
 
-/* HEADER */
-
 .header {
     height: 90px;
     display: flex;
@@ -108,8 +106,6 @@ button {
     border-radius: 50%;
     box-shadow: 0 0 12px var(--success);
 }
-
-/* AUTH */
 
 .auth-screen {
     min-height: calc(100vh - 90px);
@@ -159,8 +155,6 @@ button {
     font-size: 15px;
     line-height: 1.8;
 }
-
-/* AUTH CARD */
 
 .auth-card {
     background: rgba(17, 17, 27, 0.88);
@@ -301,8 +295,6 @@ button {
     color: var(--success);
 }
 
-/* DASHBOARD */
-
 .dashboard {
     padding: 65px 0 30px;
 }
@@ -349,8 +341,6 @@ button {
     opacity: 0.5;
     cursor: wait;
 }
-
-/* PROFILE */
 
 .profile-card {
     background: linear-gradient(
@@ -435,8 +425,6 @@ button {
     font-size: 11px;
 }
 
-/* GAME PLACEHOLDER */
-
 .game-placeholder {
     min-height: 125px;
     display: flex;
@@ -494,8 +482,6 @@ button {
 .dashboard-footer span {
     color: var(--accent);
 }
-
-/* RESPONSIVE */
 
 @media (max-width: 850px) {
     .auth-screen {
@@ -586,7 +572,6 @@ button {
         margin-left: 68px;
     }
 }
-/* STOPWATCH */
 
 .stopwatch-card {
     margin-top: 25px;
@@ -733,10 +718,6 @@ button {
         font-size: 11px;
     }
 }
-
-/* ==========================================
-   MULTIPLAYER ROOMS
-========================================== */
 
 .room-card {
     margin-top: 25px;
@@ -950,10 +931,6 @@ button {
     }
 }
 
-/* ==========================================
-   TIMEGUESS — MULTIPLAYER LOBBY
-========================================== */
-
 .room-join {
     margin-top: 24px;
 }
@@ -1150,11 +1127,6 @@ button {
     }
 }
 
-
-
-/* ==========================================
-   PERSONAL STOPWATCH
-========================================== */
 .stopwatch-card,
 .game-panel {
     margin-top: 24px;
@@ -1239,8 +1211,6 @@ button {
     .result-row { flex-wrap:wrap; }
 }
 
-
-/* Public profile lookup */
 .profile-lookup-card {
     margin: 22px 0;
     padding: 26px;
@@ -1303,7 +1273,6 @@ button {
         padding: 20px;
     }
 }
-/* FIX: DESKTOP PROFILE SEARCH */
 
 @media (min-width: 851px) {
     .profile-lookup-card {
@@ -1332,8 +1301,6 @@ button {
     }
 }
 
-
-/* TIMEGUESS 2.2 — profile settings */
 .avatar {
     background-position: center;
     background-size: cover;
@@ -1479,8 +1446,6 @@ button {
     outline-offset: 3px;
 }
 
-
-/* TIMEGUESS 2.2 — stage 3 */
 .privacy-options {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

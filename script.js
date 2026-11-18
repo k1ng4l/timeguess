@@ -1,15 +1,7 @@
 
 "use strict";
 
-// ============================================
-// TIMEGUESS V2 — COMPLETE FRONTEND SCRIPT
-// ============================================
-
 document.addEventListener("DOMContentLoaded", () => {
-
-    // ----------------------------------------
-    // HELPERS
-    // ----------------------------------------
 
     const $ = (id) => document.getElementById(id);
 
@@ -25,16 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (element) element.textContent = value ?? "";
     };
 
-    const setMessage = (element, message, type = "") => {
+    const setNotice = (element, message, type = "", className = "auth-message") => {
         if (!element) return;
         element.textContent = message;
-        element.className = type ? `auth-message ${type}` : "auth-message";
-    };
-
-    const setSettingsMessage = (element, message, type = "") => {
-        if (!element) return;
-        element.textContent = message;
-        element.className = type ? `settings-message ${type}` : "settings-message";
+        element.className = type ? `${className} ${type}` : className;
     };
 
     async function apiRequest(url, options = {}) {
@@ -82,11 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
         button.disabled = loading;
         button.textContent = loading ? loadingText : normalText;
     }
-
-
-    // ========================================
-    // AUTHENTICATION
-    // ========================================
 
     const authScreen = $("authScreen");
     const dashboardScreen = $("dashboardScreen");
@@ -139,11 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loginTab?.addEventListener("click", showLogin);
     registerTab?.addEventListener("click", showRegister);
-
-
-    // ----------------------------------------
-    // PROFILE
-    // ----------------------------------------
 
     function setAvatar(element, username, avatarData) {
         if (!element) return;
@@ -332,10 +308,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ----------------------------------------
-    // PROFILE SETTINGS: USERNAME + AVATAR
-    // ----------------------------------------
-
     const usernameChangeForm = $("usernameChangeForm");
     const usernameChangeMessage = $("usernameChangeMessage");
     const avatarFileInput = $("avatarFileInput");
@@ -352,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const submitButton = usernameChangeForm.querySelector('button[type="submit"]');
         const oldText = submitButton?.textContent || "Изменить username";
-        setSettingsMessage(usernameChangeMessage, "Обновляем имя пользователя...");
+        setNotice(usernameChangeMessage, "Обновляем имя пользователя...", "", "settings-message");
         setLoading(submitButton, true, "Сохраняем...", oldText);
 
         try {
@@ -362,9 +334,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             renderProfile(result.profile);
             usernameChangeForm.reset();
-            setSettingsMessage(usernameChangeMessage, result.message || "Username обновлён.", "success");
+            setNotice(usernameChangeMessage, result.message || "Username обновлён.", "success", "settings-message");
         } catch (error) {
-            setSettingsMessage(usernameChangeMessage, error.message || "Не удалось изменить username.");
+            setNotice(usernameChangeMessage, error.message || "Не удалось изменить username.", "", "settings-message");
         } finally {
             if (submitButton) {
                 submitButton.disabled = false;
@@ -395,9 +367,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: jsonBody(payload)
             });
             renderProfile(result.profile);
-            setSettingsMessage(privacyMessage, "Настройки приватности сохранены.", "success");
+            setNotice(privacyMessage, "Настройки приватности сохранены.", "success", "settings-message");
         } catch (error) {
-            setSettingsMessage(privacyMessage, error.message || "Не удалось сохранить настройки.");
+            setNotice(privacyMessage, error.message || "Не удалось сохранить настройки.", "", "settings-message");
         } finally {
             savePrivacyButton.disabled = false;
             savePrivacyButton.textContent = oldText;
@@ -450,15 +422,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        setSettingsMessage(avatarMessage, "Подготавливаем изображение...");
+        setNotice(avatarMessage, "Подготавливаем изображение...", "", "settings-message");
         if (saveAvatarButton) saveAvatarButton.disabled = true;
         try {
             pendingAvatarData = await makeAvatarData(file);
             setAvatar($("profileAvatar"), currentUser?.username, pendingAvatarData);
             if (saveAvatarButton) saveAvatarButton.disabled = false;
-            setSettingsMessage(avatarMessage, "Предпросмотр готов. Нажми «Сохранить аватарку».");
+            setNotice(avatarMessage, "Предпросмотр готов. Нажми «Сохранить аватарку».", "", "settings-message");
         } catch (error) {
-            setSettingsMessage(avatarMessage, error.message || "Не удалось обработать изображение.");
+            setNotice(avatarMessage, error.message || "Не удалось обработать изображение.", "", "settings-message");
             avatarFileInput.value = "";
         }
     });
@@ -476,9 +448,9 @@ document.addEventListener("DOMContentLoaded", () => {
             pendingAvatarData = null;
             if (avatarFileInput) avatarFileInput.value = "";
             renderProfile(result.profile);
-            setSettingsMessage(avatarMessage, result.message || "Аватарка сохранена.", "success");
+            setNotice(avatarMessage, result.message || "Аватарка сохранена.", "success", "settings-message");
         } catch (error) {
-            setSettingsMessage(avatarMessage, error.message || "Не удалось сохранить аватарку.");
+            setNotice(avatarMessage, error.message || "Не удалось сохранить аватарку.", "", "settings-message");
             saveAvatarButton.disabled = false;
         } finally {
             saveAvatarButton.textContent = oldText;
@@ -487,7 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     deleteAvatarButton?.addEventListener("click", async () => {
         if (!currentUser?.avatar_data && !pendingAvatarData) {
-            setSettingsMessage(avatarMessage, "У тебя пока нет загруженной аватарки.");
+            setNotice(avatarMessage, "У тебя пока нет загруженной аватарки.", "", "settings-message");
             return;
         }
         deleteAvatarButton.disabled = true;
@@ -500,9 +472,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (avatarFileInput) avatarFileInput.value = "";
             if (saveAvatarButton) saveAvatarButton.disabled = true;
             renderProfile(result.profile);
-            setSettingsMessage(avatarMessage, result.message || "Аватарка удалена.", "success");
+            setNotice(avatarMessage, result.message || "Аватарка удалена.", "success", "settings-message");
         } catch (error) {
-            setSettingsMessage(avatarMessage, error.message || "Не удалось удалить аватарку.");
+            setNotice(avatarMessage, error.message || "Не удалось удалить аватарку.", "", "settings-message");
         } finally {
             deleteAvatarButton.disabled = false;
         }
@@ -522,11 +494,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // ----------------------------------------
-    // REGISTER
-    // ----------------------------------------
-
     async function handleRegister(event) {
         event?.preventDefault();
 
@@ -539,7 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const passwordConfirm = $("registerPasswordConfirm")?.value;
 
         if (!username || !password || !passwordConfirm) {
-            setMessage(
+            setNotice(
                 registerMessage,
                 "Заполни все поля."
             );
@@ -547,7 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (password !== passwordConfirm) {
-            setMessage(
+            setNotice(
                 registerMessage,
                 "Пароли не совпадают."
             );
@@ -555,7 +522,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (password.length < 8) {
-            setMessage(
+            setNotice(
                 registerMessage,
                 "Пароль должен содержать минимум 8 символов."
             );
@@ -586,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 })
             });
 
-            setMessage(
+            setNotice(
                 registerMessage,
                 "Аккаунт создан! Загружаем...",
                 "success"
@@ -595,7 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await loadProfile();
 
         } catch (error) {
-            setMessage(
+            setNotice(
                 registerMessage,
                 error.message
             );
@@ -621,11 +588,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // ----------------------------------------
-    // LOGIN
-    // ----------------------------------------
-
     async function handleLogin(event) {
         event?.preventDefault();
 
@@ -637,7 +599,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = $("loginPassword")?.value;
 
         if (!username || !password) {
-            setMessage(
+            setNotice(
                 loginMessage,
                 "Введи имя пользователя и пароль."
             );
@@ -671,7 +633,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await loadProfile();
 
         } catch (error) {
-            setMessage(
+            setNotice(
                 loginMessage,
                 error.message
             );
@@ -697,11 +659,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // ========================================
-    // ROOMS
-    // ========================================
-
     const createRoomButton = $("createRoomButton");
     const targetScoreSelect = $("targetScore");
 
@@ -723,7 +680,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const startRoomButton = $("startRoomButton");
     const leaveRoomButton = $("leaveRoomButton");
 
-    // Support for the previous room HTML.
     const oldCreatedRoom = $("createdRoom");
     const oldRoomCode = $("roomCode");
     const oldRoomTargetScore = $("roomTargetScore");
@@ -769,11 +725,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-
-    // ----------------------------------------
-    // OPEN ROOM
-    // ----------------------------------------
-
     function openRoom(room) {
         room = normalizeRoom(room);
 
@@ -794,11 +745,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderLobby(room);
         startLobbyRefresh();
     }
-
-
-    // ----------------------------------------
-    // CREATE ROOM
-    // ----------------------------------------
 
     if (createRoomButton) {
         createRoomButton.addEventListener("click", async () => {
@@ -841,11 +787,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-
-    // ----------------------------------------
-    // JOIN ROOM
-    // ----------------------------------------
 
     if (joinRoomCode) {
         joinRoomCode.addEventListener("input", () => {
@@ -912,11 +853,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
-
-
-    // ----------------------------------------
-    // RENDER LOBBY
-    // ----------------------------------------
 
     function renderLobby(rawRoom) {
         const room = normalizeRoom(rawRoom);
@@ -1025,7 +961,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 lobbyPlayers.append(card);
             });
 
-            // Empty slots.
             for (let i = room.players.length; i < room.max_players; i++) {
                 const slot = document.createElement("div");
                 slot.className = "lobby-player lobby-empty-slot";
@@ -1067,11 +1002,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // ----------------------------------------
-    // REFRESH LOBBY
-    // ----------------------------------------
-
     function startLobbyRefresh() {
         stopLobbyRefresh();
 
@@ -1112,11 +1042,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // ----------------------------------------
-    // RESTORE ROOM AFTER RELOAD
-    // ----------------------------------------
-
     async function restoreRoom() {
         if (restoringRoom) return;
 
@@ -1149,11 +1074,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // ----------------------------------------
-    // COPY CODE
-    // ----------------------------------------
-
     if (copyRoomCodeButton) {
         copyRoomCodeButton.addEventListener("click", async () => {
             if (!activeRoomCode) return;
@@ -1176,11 +1096,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-
-    // ----------------------------------------
-    // START GAME
-    // ----------------------------------------
 
     if (startRoomButton) {
         startRoomButton.addEventListener("click", async () => {
@@ -1221,12 +1136,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-
-
-    // ========================================
-    // LIVE GAME
-    // ========================================
 
     const roundNumber = $("roundNumber");
     const phaseLabel = $("phaseLabel");
@@ -1455,10 +1364,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ----------------------------------------
-    // LEAVE ROOM
-    // ----------------------------------------
-
     if (leaveRoomButton) {
         leaveRoomButton.addEventListener("click", async () => {
             if (!activeRoomCode) return;
@@ -1522,11 +1427,6 @@ document.addEventListener("DOMContentLoaded", () => {
         clearRoomMessage();
     }
 
-
-    // ========================================
-    // LOGOUT
-    // ========================================
-
     if (logoutButton) {
         logoutButton.addEventListener("click", async () => {
             logoutButton.disabled = true;
@@ -1573,11 +1473,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-
-    // ========================================
-    // STOPWATCH
-    // ========================================
 
     const stopwatchDisplay = $("stopwatchDisplay");
     const stopwatchStart = $("stopwatchStart");
@@ -1707,11 +1602,6 @@ document.addEventListener("DOMContentLoaded", () => {
     stopwatchStart?.addEventListener("click", toggleStopwatch);
     stopwatchReset?.addEventListener("click", resetStopwatch);
     stopwatchLap?.addEventListener("click", addStopwatchLap);
-
-
-    // ========================================
-    // START APPLICATION
-    // ========================================
 
     initializeApp();
 
